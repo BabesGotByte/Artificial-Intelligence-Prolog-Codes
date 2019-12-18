@@ -1,0 +1,157 @@
+%Find the last element of a list.
+my_last(X,[X]).
+my_last(X,[_|L]) :- my_last(X,L).
+%my_last(X,[a,b,c,d]).
+
+%Find the last but one element of a list.
+my_last(X,[X,_]).
+my_last(X,[_|L]) :- my_last(X,L).
+%my_last(X,[a,b,c,d]).
+
+%element at kth position
+element_at(X,[X|_],1).
+element_at(X,[_|L],K) :- K > 1, K1 is K - 1, element_at(X,L,K1).
+%element_at(X,[a,b,c,d,e,f],5).
+
+%length of list
+my_length([],0).
+my_length([_|L],N) :- my_length(L,N1), N is N1 + 1.
+
+%reverse
+my_rev([],Acc):- print(Acc).
+my_rev([X|Xs],Acc) :- my_rev(Xs,[X|Acc]).
+
+%palindrome
+is_palindrome(L) :- reverse(L,L).
+
+%flatten the nested list structure
+my_flatten(X,[X]) :- \+ is_list(X).
+my_flatten([],[]).
+my_flatten([X|Xs],Zs) :- my_flatten(X,Y), my_flatten(Xs,Ys), append(Y,Ys,Zs).
+
+%remove consecutive duplicates
+compress([],[]).
+compress([X],[X]).
+compress([X,X|Xs],Zs) :- compress([X|Xs],Zs).
+compress([X,Y|Ys],[X|Zs]) :- X \= Y, compress([Y|Ys],Zs).
+
+%Pack consecutive duplicates of list elements into sublists.
+pack([],[]).
+pack([X|Xs],[Z|Zs]) :- transfer(X,Xs,Ys,Z), pack(Ys,Zs).
+transfer(X,[],[],[X]).
+transfer(X,[Y|Ys],[Y|Ys],[X]) :- X \= Y.
+transfer(X,[X|Xs],Ys,[X|Zs]) :- transfer(X,Xs,Ys,Zs).
+
+
+%Split a list into two parts; the length of the first part is given.
+split(L,0,[],L).
+split([X|Xs],N,[X|Ys],Zs) :- N > 0, N1 is N - 1, split(Xs,N1,Ys,Zs).
+
+
+%Run-length encoding of a list.
+:- ensure_loaded(p09).
+
+encode(L1,L2) :- pack(L1,L), transform(L,L2).
+
+transform([],[]).
+transform([[X|Xs]|Ys],[[N,X]|Zs]) :- length([X|Xs],N), transform(Ys,Zs).
+
+
+%duplicate a element of list
+dupli([],[]).
+dupli([X|Xs],[X,X|Ys]) :- dupli(Xs,Ys).
+
+
+
+%Generate the combinations of K distinct objects chosen from the N elements of a list
+combination(0,_,[]).
+combination(K,L,[X|Xs]) :- K > 0,
+   el(X,L,R), K1 is K-1, combination(K1,R,Xs).
+el(X,[X|L],L).
+el(X,[_|L],R) :- el(X,L,R).
+
+
+%generate random permutation of list
+:- ensure_loaded(p23).
+rnd_permu(L1,L2) :- length(L1,N), rnd_select(L1,N,L2).
+
+
+%Draw N different random numbers from the set 1..M.
+:- ensure_loaded(p22).
+:- ensure_loaded(p23).
+
+lotto(N,M,L) :- range(1,M,R), rnd_select(R,N,L).
+
+
+
+
+%Extract a given number of randomly selected elements from a list.
+:- ensure_loaded(p20).
+
+rnd_select(_,0,[]).
+rnd_select(Xs,N,[X|Zs]) :- N > 0,
+    length(Xs,L),
+    I is random(L) + 1,
+    remove_at(X,Xs,I,Ys),
+    N1 is N - 1,
+    rnd_select(Ys,N1,Zs).
+
+
+%Create a list containing all integers within a given range.
+range(I,I,[I]).
+range(I,K,[I|L]) :- I < K, I1 is I + 1, range(I1,K,L).
+
+
+
+
+%insert an element at given position into list
+:- ensure_loaded(p20).
+insert_at(X,L,K,R) :- remove_at(X,R,K,L).
+
+
+
+% Remove the Kth element from a list.
+remove_at(X,[X|Xs],1,Xs).
+remove_at(X,[Y|Xs],K,[Y|Ys]) :- K > 1, 
+   K1 is K - 1, remove_at(X,Xs,K1,Ys).
+
+
+
+
+
+
+%isprime
+is_prime(2).
+is_prime(3).
+is_prime(P) :- integer(P), P > 3, P mod 2 =\= 0, \+ has_factor(P,3).  
+has_factor(N,L) :- N mod L =:= 0.
+has_factor(N,L) :- L * L < N, L2 is L + 2, has_factor(N,L2).
+
+
+
+
+
+
+%gcd of a number
+gcd(X,0,X) :- X > 0.
+gcd(X,Y,G) :- Y > 0, Z is X mod Y, gcd(Y,Z,G).
+
+:- arithmetic_function(gcd/2).
+
+
+
+%2 integers are co prime.
+:- ensure_loaded(p32).
+coprime(X,Y) :- gcd(X,Y,1).
+
+
+%prime factors of a positive number
+prime_factors(N,L) :- N > 0,  prime_factors(N,L,2).
+prime_factors(1,[],_) :- !.
+prime_factors(N,[F|L],F) :-                           % N is multiple of F
+   R is N // F, N =:= R * F, !, prime_factors(R,L,F).
+prime_factors(N,L,F) :- 
+   next_factor(N,F,NF), prime_factors(N,L,NF).        % N is not multiple of F
+next_factor(_,2,3) :- !.
+next_factor(N,F,NF) :- F * F < N, !, NF is F + 2.
+next_factor(N,_,N).                                 % F > sqrt(N)
